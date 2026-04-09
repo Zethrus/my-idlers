@@ -89,7 +89,7 @@ class MapController extends Controller
                 'locations.latitude',
                 'locations.longitude',
                 DB::raw("'Shared' as type"),
-                DB::raw('COALESCE(primary_ips.address, shared_hosting.ip) as ip')
+                'primary_ips.address as ip'
             )
             ->get();
     }
@@ -112,7 +112,7 @@ class MapController extends Controller
                 'locations.latitude',
                 'locations.longitude',
                 DB::raw("'Reseller' as type"),
-                DB::raw('COALESCE(primary_ips.address, reseller_hosting.ip) as ip')
+                'primary_ips.address as ip'
             )
             ->get();
     }
