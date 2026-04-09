@@ -66,7 +66,7 @@ class MapController extends Controller
                 'locations.latitude',
                 'locations.longitude',
                 DB::raw("'Server' as type"),
-                DB::raw('COALESCE(primary_ips.address, servers.ipv4, servers.ipv6) as ip')
+                'primary_ips.address as ip'
             )
             ->get();
     }
