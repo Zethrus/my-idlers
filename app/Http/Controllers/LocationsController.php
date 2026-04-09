@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Locations;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 
@@ -27,14 +26,18 @@ class LocationsController extends Controller
             'location_name' => 'required|string|min:2|max:255'
         ]);
 
-        Locations::create([
+        $location = Locations::create([
             'name' => $request->location_name
         ]);
 
-        Cache::forget('locations');
+        $message = 'Location Created Successfully.';
+
+        if (!$location->syncCoordinates()) {
+            $message .= ' Automatic map coordinate lookup failed. Run php artisan locations:backfill-coordinates after deploy.';
+        }
 
         return redirect()->route('locations.index')
-            ->with('success', 'Location Created Successfully.');
+            ->with('success', $message);
     }
 
     public function show(Locations $location)
@@ -54,7 +57,12 @@ class LocationsController extends Controller
             ->get(['r.id', 'r.main_domain as main_domain_reseller'])
             ->toArray();
 
-        $data = array_merge($servers, $shared, $reseller);
+        $seedboxes = DB::table('seedboxes as sb')
+            ->where('sb.location_id', $location->id)
+            ->get(['sb.id', DB::raw('COALESCE(sb.hostname, sb.title) as seedbox_name')])
+            ->toArray();
+
+        $data = array_merge($servers, $shared, $reseller, $seedboxes);
 
         return view('locations.show', compact(['location', 'data']));
     }
@@ -62,8 +70,6 @@ class LocationsController extends Controller
     public function destroy(Locations $location)
     {
         if ($location->delete()){
-            Cache::forget('locations');
-
             return redirect()->route('locations.index')
                 ->with('success', 'Location was deleted Successfully.');
         }

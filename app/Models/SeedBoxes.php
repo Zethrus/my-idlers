@@ -30,6 +30,14 @@ class SeedBoxes extends Model
                 $builder->orderBy($array[0], $array[1]);
             }
         });
+
+        static::saved(function () {
+            Cache::forget('map_data');
+        });
+
+        static::deleted(function () {
+            Cache::forget('map_data');
+        });
     }
 
     public static function allSeedboxes()

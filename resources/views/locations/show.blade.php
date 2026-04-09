@@ -14,6 +14,33 @@
 
         <div class="detail-card">
             <div class="detail-section">
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="detail-item">
+                            <span class="detail-label">Map Coordinates</span>
+                            <span class="detail-value">
+                                @if(!is_null($location->latitude) && !is_null($location->longitude))
+                                    {{ $location->latitude }}, {{ $location->longitude }}
+                                @else
+                                    <span class="text-muted">Not resolved</span>
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="detail-item">
+                            <span class="detail-label">Parsed City</span>
+                            <span class="detail-value">{{ $location->geo_city ?? 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="detail-item">
+                            <span class="detail-label">Parsed Country</span>
+                            <span class="detail-value">{{ $location->geo_country ?? 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="detail-section-header">
                     <h6 class="detail-section-title">Services at this location</h6>
                 </div>
@@ -26,6 +53,7 @@
                                 @if(isset($item->hostname)) Server
                                 @elseif(isset($item->main_domain_shared)) Shared
                                 @elseif(isset($item->main_domain_reseller)) Reseller
+                                @elseif(isset($item->seedbox_name)) Seed Box
                                 @endif
                             </span>
                             <span class="detail-value">
@@ -35,6 +63,8 @@
                                     <a href="{{ route('shared.show', $item->id) }}">{{ $item->main_domain_shared }}</a>
                                 @elseif(isset($item->main_domain_reseller))
                                     <a href="{{ route('reseller.show', $item->id) }}">{{ $item->main_domain_reseller }}</a>
+                                @elseif(isset($item->seedbox_name))
+                                    <a href="{{ route('seedboxes.show', $item->id) }}">{{ $item->seedbox_name }}</a>
                                 @endif
                             </span>
                         </div>

@@ -20,51 +20,123 @@ class MapController extends Controller
             return response()->json($cachedData);
         }
 
-        $data = DB::table('ips')
-                ->leftJoin('servers', 'servers.id', '=', 'ips.service_id')
-                ->leftJoin('shared_hosting', 'shared_hosting.id', '=', 'ips.service_id')
-                ->leftJoin('reseller_hosting', 'reseller_hosting.id', '=', 'ips.service_id')
-                ->leftJoin('seedboxes', 'seedboxes.id', '=', 'ips.service_id')
-                ->whereNotNull('latitude')
-                ->whereNotNull('longitude')
-                ->where(function ($query) {
-                    $query->whereNotNull('servers.id')
-                        ->orWhereNotNull('shared_hosting.id')
-                        ->orWhereNotNull('reseller_hosting.id')
-                        ->orWhereNotNull('seedboxes.id');
-                })
-                ->select(
-                    'ips.service_id',
-                    'ips.address',
-                    'ips.latitude',
-                    'ips.longitude',
-                    'ips.city',
-                    'ips.country',
-                    DB::raw("CASE
-                        WHEN servers.id IS NOT NULL THEN 'Server'
-                        WHEN shared_hosting.id IS NOT NULL THEN 'Shared'
-                        WHEN reseller_hosting.id IS NOT NULL THEN 'Reseller'
-                        WHEN seedboxes.id IS NOT NULL THEN 'Seed Box'
-                    END as type"),
-                    DB::raw('COALESCE(servers.hostname, shared_hosting.main_domain, reseller_hosting.main_domain, seedboxes.hostname, seedboxes.title, ips.address) as name')
-                )
-                ->get()
-                ->map(function ($ip) {
-                    return [
-                        'lat' => (float) $ip->latitude,
-                        'lng' => (float) $ip->longitude,
-                        'ip' => $ip->address,
-                        'city' => $ip->city,
-                        'country' => $ip->country,
-                        'type' => $ip->type,
-                        'name' => $ip->name,
-                        'service_id' => $ip->service_id,
-                    ];
-                })
-                ->values();
+        $primaryIps = DB::table('ips')
+            ->select('service_id', DB::raw('MIN(address) as address'))
+            ->groupBy('service_id');
+
+        $data = $this->serverRows($primaryIps)
+            ->concat($this->sharedRows($primaryIps))
+            ->concat($this->resellerRows($primaryIps))
+            ->concat($this->seedboxRows($primaryIps))
+            ->map(function ($service) {
+                return [
+                    'lat' => (float) $service->latitude,
+                    'lng' => (float) $service->longitude,
+                    'ip' => $service->ip,
+                    'location' => $service->location,
+                    'city' => $service->city,
+                    'country' => $service->country,
+                    'type' => $service->type,
+                    'name' => $service->name,
+                    'service_id' => $service->service_id,
+                ];
+            })
+            ->values();
 
         Cache::put('map_data', $data, $data->isEmpty() ? now()->addMinutes(5) : now()->addDay());
 
         return response()->json($data);
+    }
+
+    private function serverRows($primaryIps)
+    {
+        return DB::table('servers')
+            ->join('locations', 'locations.id', '=', 'servers.location_id')
+            ->leftJoinSub($primaryIps, 'primary_ips', function ($join) {
+                $join->on('primary_ips.service_id', '=', 'servers.id');
+            })
+            ->whereNotNull('locations.latitude')
+            ->whereNotNull('locations.longitude')
+            ->select(
+                'servers.id as service_id',
+                'servers.hostname as name',
+                'locations.name as location',
+                'locations.geo_city as city',
+                'locations.geo_country as country',
+                'locations.latitude',
+                'locations.longitude',
+                DB::raw("'Server' as type"),
+                DB::raw('COALESCE(primary_ips.address, servers.ipv4, servers.ipv6) as ip')
+            )
+            ->get();
+    }
+
+    private function sharedRows($primaryIps)
+    {
+        return DB::table('shared_hosting')
+            ->join('locations', 'locations.id', '=', 'shared_hosting.location_id')
+            ->leftJoinSub($primaryIps, 'primary_ips', function ($join) {
+                $join->on('primary_ips.service_id', '=', 'shared_hosting.id');
+            })
+            ->whereNotNull('locations.latitude')
+            ->whereNotNull('locations.longitude')
+            ->select(
+                'shared_hosting.id as service_id',
+                'shared_hosting.main_domain as name',
+                'locations.name as location',
+                'locations.geo_city as city',
+                'locations.geo_country as country',
+                'locations.latitude',
+                'locations.longitude',
+                DB::raw("'Shared' as type"),
+                DB::raw('COALESCE(primary_ips.address, shared_hosting.ip) as ip')
+            )
+            ->get();
+    }
+
+    private function resellerRows($primaryIps)
+    {
+        return DB::table('reseller_hosting')
+            ->join('locations', 'locations.id', '=', 'reseller_hosting.location_id')
+            ->leftJoinSub($primaryIps, 'primary_ips', function ($join) {
+                $join->on('primary_ips.service_id', '=', 'reseller_hosting.id');
+            })
+            ->whereNotNull('locations.latitude')
+            ->whereNotNull('locations.longitude')
+            ->select(
+                'reseller_hosting.id as service_id',
+                'reseller_hosting.main_domain as name',
+                'locations.name as location',
+                'locations.geo_city as city',
+                'locations.geo_country as country',
+                'locations.latitude',
+                'locations.longitude',
+                DB::raw("'Reseller' as type"),
+                DB::raw('COALESCE(primary_ips.address, reseller_hosting.ip) as ip')
+            )
+            ->get();
+    }
+
+    private function seedboxRows($primaryIps)
+    {
+        return DB::table('seedboxes')
+            ->join('locations', 'locations.id', '=', 'seedboxes.location_id')
+            ->leftJoinSub($primaryIps, 'primary_ips', function ($join) {
+                $join->on('primary_ips.service_id', '=', 'seedboxes.id');
+            })
+            ->whereNotNull('locations.latitude')
+            ->whereNotNull('locations.longitude')
+            ->select(
+                'seedboxes.id as service_id',
+                DB::raw('COALESCE(seedboxes.hostname, seedboxes.title) as name'),
+                'locations.name as location',
+                'locations.geo_city as city',
+                'locations.geo_country as country',
+                'locations.latitude',
+                'locations.longitude',
+                DB::raw("'Seed Box' as type"),
+                'primary_ips.address as ip'
+            )
+            ->get();
     }
 }

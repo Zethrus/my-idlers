@@ -68,7 +68,7 @@
                         document.getElementById('map').insertAdjacentHTML('afterbegin',
                             '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:rgba(255,255,255,.9);padding:20px;border-radius:8px;text-align:center;">' +
                             '<p class="mb-1"><strong>No services with coordinates found.</strong></p>' +
-                            '<p class="text-muted mb-0">Run <code>php artisan ips:backfill-coordinates</code> to populate coordinates.</p>' +
+                            '<p class="text-muted mb-0">Run <code>php artisan locations:backfill-coordinates</code> to geocode saved locations.</p>' +
                             '</div>'
                         );
                         return;
@@ -81,7 +81,8 @@
                             '<strong>' + escapeHtml(item.name) + '</strong>' +
                             '<span class="badge" style="background:' + (typeColors[item.type] || '#206bc4') + ';color:#fff;margin-left:6px;font-size:11px">' + escapeHtml(item.type) + '</span>' +
                             '<hr style="margin:6px 0">' +
-                            '<div><i class="fas fa-network-wired"></i> ' + escapeHtml(item.ip) + '</div>' +
+                            '<div><i class="fas fa-map-marker-alt"></i> ' + escapeHtml(item.location) + '</div>' +
+                            (item.ip ? '<div><i class="fas fa-network-wired"></i> ' + escapeHtml(item.ip) + '</div>' : '') +
                             (item.city ? '<div><i class="fas fa-city"></i> ' + escapeHtml(item.city) + '</div>' : '') +
                             (item.country ? '<div><i class="fas fa-flag"></i> ' + escapeHtml(item.country) + '</div>' : '') +
                             '</div>';
