@@ -24,11 +24,12 @@ class IPs extends Model
     public static function deleteIPsAssignedTo($service_id): void
     {
         DB::table('ips')->where('service_id', $service_id)->delete();
+        Cache::forget('map_data');
     }
 
     public static function insertIP(string $service_id, string $address): IPs
     {
-        return self::create(
+        $ip = self::create(
             [
                 'id' => Str::random(8),
                 'service_id' => $service_id,
@@ -37,6 +38,10 @@ class IPs extends Model
                 'active' => 1
             ]
         );
+
+        Cache::forget('map_data');
+
+        return $ip;
     }
 
     public static function ipsForServer(string $server_id)

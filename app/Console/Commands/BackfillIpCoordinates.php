@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\IPs;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class BackfillIpCoordinates extends Command
 {
@@ -13,8 +14,12 @@ class BackfillIpCoordinates extends Command
 
     public function handle(): int
     {
-        $ips = IPs::whereNotNull('fetched_at')
-            ->whereNull('latitude')
+        Cache::forget('map_data');
+
+        $ips = IPs::where(function ($query) {
+            $query->whereNull('latitude')
+                ->orWhereNull('longitude');
+        })
             ->get();
 
         if ($ips->isEmpty()) {
@@ -51,6 +56,7 @@ class BackfillIpCoordinates extends Command
 
         $bar->finish();
         $this->newLine(2);
+        Cache::forget('map_data');
         $this->info("Done. Updated: {$updated}, Failed: {$failed}");
 
         return Command::SUCCESS;
