@@ -45,12 +45,15 @@ class BackfillLocationCoordinates extends Command
         $failed = 0;
 
         foreach ($locations as $location) {
-            if ($location->syncCoordinates()) {
+            $result = Locations::geocodeResult($location->name);
+
+            if ($result['success']) {
+                $location->update($result['coordinates']);
                 $updated++;
             } else {
                 $failed++;
                 $this->newLine();
-                $this->warn("Failed to geocode {$location->name}");
+                $this->warn("Failed to geocode {$location->name}: {$result['error']}");
             }
 
             $bar->advance();
