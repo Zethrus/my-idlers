@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 
 class BackfillLocationCoordinates extends Command
 {
-    protected $signature = 'locations:backfill-coordinates';
+    protected $signature = 'locations:backfill-coordinates {--force : Re-geocode all locations, including ones that already have coordinates}';
 
     protected $description = 'Resolve map coordinates from saved location names';
 
@@ -16,17 +16,27 @@ class BackfillLocationCoordinates extends Command
     {
         Cache::forget('map_data');
 
-        $locations = Locations::where(function ($query) {
-            $query->whereNull('latitude')
-                ->orWhereNull('longitude');
-        })->orderBy('name')->get();
+        $query = Locations::query()->orderBy('name');
+
+        if (!$this->option('force')) {
+            $query->where(function ($innerQuery) {
+                $innerQuery->whereNull('latitude')
+                    ->orWhereNull('longitude');
+            });
+        }
+
+        $locations = $query->get();
 
         if ($locations->isEmpty()) {
-            $this->info('No locations need coordinate backfilling.');
+            $this->info($this->option('force')
+                ? 'No locations found to re-geocode.'
+                : 'No locations need coordinate backfilling.');
             return Command::SUCCESS;
         }
 
-        $this->info("Found {$locations->count()} locations to geocode.");
+        $this->info($this->option('force')
+            ? "Found {$locations->count()} locations to re-geocode."
+            : "Found {$locations->count()} locations to geocode.");
 
         $bar = $this->output->createProgressBar($locations->count());
         $bar->start();
