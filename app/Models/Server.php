@@ -190,6 +190,7 @@ class Server extends Model
         Cache::forget('services_count_all');
         Cache::forget('pricing_breakdown');
         Cache::forget('all_active_pricing');
+        Cache::forget('map_data');
     }
 
     public static function serverSpecificCacheForget(string $server_id): void

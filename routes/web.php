@@ -18,6 +18,7 @@ use App\Http\Controllers\ServerController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SharedController;
 use App\Http\Controllers\YabsController;
+use App\Http\Controllers\MapController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -59,6 +60,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('yabs', YabsController::class);
 
     Route::resource('notes', NoteController::class);
+
+    Route::get('/map', [MapController::class, 'index'])->name('map.index');
+    Route::get('/map/data', [MapController::class, 'data'])->name('map.data');
 
     Route::get('yabs/{yab}/json', [YabsController::class, 'yabsToJson'])->name('yabs.json');
     Route::get('yabs-compare-choose', [YabsController::class, 'chooseYabsCompare'])->name('yabs.compare-choose');

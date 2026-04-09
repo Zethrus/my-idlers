@@ -26,6 +26,8 @@ Route::middleware('auth:api')->get('domains/', 'App\Http\Controllers\ApiControll
 Route::middleware('auth:api')->get('domains/{id}', 'App\Http\Controllers\ApiController@getDomains');
 
 Route::middleware('auth:api')->get('servers', 'App\Http\Controllers\ApiController@getAllServers');
+
+Route::middleware('auth:api')->get('map-data', 'App\Http\Controllers\MapController@data');
 Route::middleware('auth:api')->get('servers/{id}', 'App\Http\Controllers\ApiController@getServer');
 
 Route::middleware('auth:api')->post('servers', 'App\Http\Controllers\ApiController@storeServer');

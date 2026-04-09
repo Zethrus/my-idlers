@@ -29,6 +29,9 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('misc.index') ? 'active' : '' }}" href="{{ route('misc.index') }}">Misc</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('map.index') ? 'active' : '' }}" href="{{ route('map.index') }}"><i class="fas fa-globe"></i> Map</a>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">More</a>
                     <ul class="dropdown-menu">

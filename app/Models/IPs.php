@@ -17,7 +17,7 @@ class IPs extends Model
 
     protected $keyType = 'string';
 
-    protected $fillable = ['id', 'service_id', 'address', 'is_ipv4', 'active', 'continent', 'country', 'region', 'city', 'org', 'isp', 'asn', 'timezone_gmt', 'fetched_at'];
+    protected $fillable = ['id', 'service_id', 'address', 'is_ipv4', 'active', 'continent', 'country', 'region', 'city', 'org', 'isp', 'asn', 'timezone_gmt', 'latitude', 'longitude', 'fetched_at'];
 
     public $incrementing = false;
 
@@ -70,8 +70,12 @@ class IPs extends Model
                 'isp' => $data['isp'],
                 'asn' => $data['asn'],
                 'timezone_gmt' => $data['timezone_gmt'],
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
                 'fetched_at' => now()
             ]);
+
+            Cache::forget('map_data');
 
         }
 
