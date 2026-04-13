@@ -71,6 +71,12 @@
                             }
                         @endphp
                         <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <label class="visually-hidden" for="costBillingCycleFilter">Billing cycle filter</label>
+                            <select class="form-select form-select-sm w-auto" id="costBillingCycleFilter" aria-label="Filter costs by billing cycle">
+                                @foreach($information['billing_cycle_filters'] as $billingCycle => $label)
+                                    <option value="{{ $billingCycle }}" @selected($billingCycle === $information['selected_billing_cycle_filter'])>{{ $label }}</option>
+                                @endforeach
+                            </select>
                             <div class="dropdown" data-bs-auto-close="outside">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="costFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                     <span data-cost-filter-label>{{ $initialCostFilterLabel }}</span>
@@ -285,13 +291,14 @@
             const currencyBadge = document.querySelector('[data-cost-currency]');
             const allCheckbox = document.getElementById('cost-filter-all');
             const filterButton = document.getElementById('costFilterDropdown');
+            const billingCycleSelect = document.getElementById('costBillingCycleFilter');
             const optionCheckboxes = Array.from(document.querySelectorAll('.cost-filter-option'));
             const allServiceTypes = optionCheckboxes.map(function (checkbox) {
                 return Number(checkbox.value);
             });
             let activeRequest = 0;
 
-            if (!costsCard || !filterLabel || !currencyBadge || !allCheckbox || optionCheckboxes.length === 0) {
+            if (!costsCard || !filterLabel || !currencyBadge || !allCheckbox || !billingCycleSelect || optionCheckboxes.length === 0) {
                 return;
             }
 
@@ -323,6 +330,10 @@
                 filterLabel.textContent = selectedTypes.length + ' selected';
             }
 
+            function getSelectedBillingCycle() {
+                return billingCycleSelect.value || 'all';
+            }
+
             function applySelection(selectedTypes) {
                 optionCheckboxes.forEach(function (checkbox) {
                     checkbox.checked = selectedTypes.includes(Number(checkbox.value));
@@ -332,9 +343,18 @@
                 updateFilterLabel(selectedTypes);
             }
 
+            function applyBillingCycleSelection(selectedBillingCycle) {
+                const normalizedBillingCycle = Array.from(billingCycleSelect.options).some(function (option) {
+                    return option.value === selectedBillingCycle;
+                }) ? selectedBillingCycle : 'all';
+
+                billingCycleSelect.value = normalizedBillingCycle;
+            }
+
             function setLoading(isLoading) {
                 costsCard.classList.toggle('opacity-50', isLoading);
                 filterButton.disabled = isLoading;
+                billingCycleSelect.disabled = isLoading;
                 optionCheckboxes.forEach(function (checkbox) {
                     checkbox.disabled = isLoading;
                 });
@@ -361,16 +381,18 @@
                 }
             }
 
-            function requestCosts(selectedTypes) {
+            function requestCosts(selectedTypes, selectedBillingCycle) {
                 const requestId = activeRequest + 1;
                 activeRequest = requestId;
 
                 applySelection(selectedTypes);
+                applyBillingCycleSelection(selectedBillingCycle);
                 setLoading(true);
 
                 axios.get(@json(route('costs.filter')), {
                     params: {
                         service_types: selectedTypes,
+                        billing_cycle: selectedBillingCycle,
                     }
                 }).then(function (response) {
                     if (requestId !== activeRequest) {
@@ -383,11 +405,16 @@
                             return Number(value);
                         })
                         : allServiceTypes;
+                    const normalizedBillingCycle = typeof data.selected_billing_cycle_filter === 'string'
+                        ? data.selected_billing_cycle_filter
+                        : 'all';
 
                     applySelection(normalizedTypes);
+                    applyBillingCycleSelection(normalizedBillingCycle);
                     updateCostFields(data);
                 }).catch(function () {
                     applySelection(getSelectedTypes().length > 0 ? getSelectedTypes() : allServiceTypes);
+                    applyBillingCycleSelection(getSelectedBillingCycle());
                 }).finally(function () {
                     if (requestId === activeRequest) {
                         setLoading(false);
@@ -398,15 +425,27 @@
             optionCheckboxes.forEach(function (checkbox) {
                 checkbox.addEventListener('change', function () {
                     const selectedTypes = getSelectedTypes();
-                    requestCosts(selectedTypes.length > 0 ? selectedTypes : allServiceTypes);
+                    requestCosts(
+                        selectedTypes.length > 0 ? selectedTypes : allServiceTypes,
+                        getSelectedBillingCycle()
+                    );
                 });
             });
 
             allCheckbox.addEventListener('change', function () {
-                requestCosts(allServiceTypes);
+                requestCosts(allServiceTypes, getSelectedBillingCycle());
+            });
+
+            billingCycleSelect.addEventListener('change', function () {
+                const selectedTypes = getSelectedTypes();
+                requestCosts(
+                    selectedTypes.length > 0 ? selectedTypes : allServiceTypes,
+                    getSelectedBillingCycle()
+                );
             });
 
             applySelection(getSelectedTypes());
+            applyBillingCycleSelection(getSelectedBillingCycle());
         });
     </script>
     @endsection

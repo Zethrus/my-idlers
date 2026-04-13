@@ -39,9 +39,14 @@ class HomeController extends Controller
         $service_count = Home::doServicesCount(Home::servicesCount());
 
         $selected_cost_filters = Home::normalizeCostFilter(Session::get('cost_filter'));
+        $selected_billing_cycle_filter = Home::normalizeBillingCycleFilter(Session::get('cost_billing_cycle_filter'));
 
         //Get pricing for weekly, monthly, yearly, 2 yearly
-        $pricing_breakdown = Home::breakdownPricingFiltered(Pricing::allPricing(), $selected_cost_filters);
+        $pricing_breakdown = Home::breakdownPricingFiltered(
+            Pricing::allPricing(),
+            $selected_cost_filters,
+            $selected_billing_cycle_filter
+        );
 
         //Summary of servers specs
         $server_summary = Home::serverSummary();
@@ -72,6 +77,8 @@ class HomeController extends Controller
             'currency' => Session::get('dashboard_currency'),
             'cost_filters' => Home::costFilterOptions(),
             'selected_cost_filters' => $selected_cost_filters,
+            'billing_cycle_filters' => Home::billingCycleFilterOptions(),
+            'selected_billing_cycle_filter' => $selected_billing_cycle_filter,
         ];
 
         return view('home', compact('information'));
@@ -82,18 +89,26 @@ class HomeController extends Controller
         $validated = $request->validate([
             'service_types' => ['nullable', 'array'],
             'service_types.*' => ['integer', Rule::in(array_keys(Home::costFilterOptions()))],
+            'billing_cycle' => ['nullable', 'string', Rule::in(array_keys(Home::billingCycleFilterOptions()))],
         ]);
 
         $selected_cost_filters = Home::normalizeCostFilter($validated['service_types'] ?? null);
+        $selected_billing_cycle_filter = Home::normalizeBillingCycleFilter($validated['billing_cycle'] ?? null);
         Session::put('cost_filter', $selected_cost_filters);
+        Session::put('cost_billing_cycle_filter', $selected_billing_cycle_filter);
 
-        $pricing_breakdown = Home::breakdownPricingFiltered(Pricing::allPricing(), $selected_cost_filters);
+        $pricing_breakdown = Home::breakdownPricingFiltered(
+            Pricing::allPricing(),
+            $selected_cost_filters,
+            $selected_billing_cycle_filter
+        );
 
         return response()->json(array_merge(
             $this->formatPricingBreakdown($pricing_breakdown),
             [
                 'currency' => Session::get('dashboard_currency'),
                 'selected_cost_filters' => $selected_cost_filters,
+                'selected_billing_cycle_filter' => $selected_billing_cycle_filter,
             ]
         ));
     }

@@ -39,6 +39,28 @@ class Home extends Model
         return empty($filtered_types) ? $available_types : $filtered_types;
     }
 
+    public static function billingCycleFilterOptions(): array
+    {
+        return [
+            'all' => 'All cycles',
+            'monthly' => 'Monthly only',
+            'annual' => 'Annual-based',
+        ];
+    }
+
+    public static function normalizeBillingCycleFilter(?string $billing_cycle): string
+    {
+        $available_cycles = array_keys(self::billingCycleFilterOptions());
+
+        if (is_null($billing_cycle)) {
+            return 'all';
+        }
+
+        $normalized_cycle = strtolower(trim($billing_cycle));
+
+        return in_array($normalized_cycle, $available_cycles, true) ? $normalized_cycle : 'all';
+    }
+
     public static function homePageCacheForget(): void
     {
         Cache::forget('services_count');//Main page services_count cache
@@ -158,14 +180,23 @@ class Home extends Model
         });
     }
 
-    public static function breakdownPricingFiltered($all_pricing, ?array $service_types = null): array
+    public static function breakdownPricingFiltered($all_pricing, ?array $service_types = null, ?string $billing_cycle = null): array
     {
         $pricing = json_decode($all_pricing, true);
         $selected_types = self::normalizeCostFilter($service_types);
+        $selected_billing_cycle = self::normalizeBillingCycleFilter($billing_cycle);
 
         if (count($selected_types) !== count(self::costFilterOptions())) {
             $pricing = array_values(array_filter($pricing, function ($price) use ($selected_types) {
                 return in_array((int)$price['service_type'], $selected_types, true);
+            }));
+        }
+
+        $term_filters = self::billingCycleTerms($selected_billing_cycle);
+
+        if (!is_null($term_filters)) {
+            $pricing = array_values(array_filter($pricing, function ($price) use ($term_filters) {
+                return in_array((int)$price['term'], $term_filters, true);
             }));
         }
 
@@ -224,6 +255,19 @@ class Home extends Model
         }
 
         return 1;
+    }
+
+    private static function billingCycleTerms(string $billing_cycle): ?array
+    {
+        if ($billing_cycle === 'monthly') {
+            return [1];
+        }
+
+        if ($billing_cycle === 'annual') {
+            return [4, 5, 6];
+        }
+
+        return null;
     }
 
     public static function doServicesCount($services_count): array
