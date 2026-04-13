@@ -13,6 +13,32 @@ class Home extends Model
 {
     use HasFactory;
 
+    public static function costFilterOptions(): array
+    {
+        return [
+            1 => 'Servers',
+            2 => 'Shared',
+            3 => 'Reseller',
+            4 => 'Domains',
+            5 => 'Misc',
+            6 => 'Seedboxes',
+        ];
+    }
+
+    public static function normalizeCostFilter(?array $service_types): array
+    {
+        $available_types = array_keys(self::costFilterOptions());
+
+        if (is_null($service_types)) {
+            return $available_types;
+        }
+
+        $normalized_types = array_map('intval', $service_types);
+        $filtered_types = array_values(array_intersect($available_types, array_unique($normalized_types)));
+
+        return empty($filtered_types) ? $available_types : $filtered_types;
+    }
+
     public static function homePageCacheForget(): void
     {
         Cache::forget('services_count');//Main page services_count cache
@@ -128,46 +154,76 @@ class Home extends Model
         $pricing = json_decode($all_pricing, true);
 
         return Cache::remember('pricing_breakdown', now()->addWeek(1), function () use ($pricing) {
-            $total_cost_weekly = $total_cost_pm = $inactive_count = 0;
-            foreach ($pricing as $price) {
-                if ($price['active'] === 1) {
-                    if (Session::get('dashboard_currency') !== 'USD') {
-                        $the_price = Pricing::convertFromUSD($price['as_usd'], Session::get('dashboard_currency'));
-                    } else {
-                        $the_price = $price['as_usd'];
-                    }
-                    if ($price['term'] === 1) {//1 month
-                        $total_cost_weekly += ($the_price / 4);
-                        $total_cost_pm += $the_price;
-                    } elseif ($price['term'] === 2) {//3 months
-                        $total_cost_weekly += ($the_price / 12);
-                        $total_cost_pm += ($the_price / 3);
-                    } elseif ($price['term'] === 3) {// 6 month
-                        $total_cost_weekly += ($the_price / 24);
-                        $total_cost_pm += ($the_price / 6);
-                    } elseif ($price['term'] === 4) {// 1 year
-                        $total_cost_weekly += ($the_price / 48);
-                        $total_cost_pm += ($the_price / 12);
-                    } elseif ($price['term'] === 5) {//2 years
-                        $total_cost_weekly += ($the_price / 96);
-                        $total_cost_pm += ($the_price / 24);
-                    } elseif ($price['term'] === 6) {//3 years
-                        $total_cost_weekly += ($the_price / 144);
-                        $total_cost_pm += ($the_price / 36);
-                    }
-                } else {
-                    $inactive_count++;
-                }
-            }
-            $total_cost_yearly = ($total_cost_pm * 12);
-
-            return array(
-                'total_cost_weekly' => $total_cost_weekly,
-                'total_cost_monthly' => $total_cost_pm,
-                'total_cost_yearly' => $total_cost_yearly,
-                'inactive_count' => $inactive_count,
-            );
+            return self::aggregatePricingBreakdown($pricing);
         });
+    }
+
+    public static function breakdownPricingFiltered($all_pricing, ?array $service_types = null): array
+    {
+        $pricing = json_decode($all_pricing, true);
+        $selected_types = self::normalizeCostFilter($service_types);
+
+        if (count($selected_types) !== count(self::costFilterOptions())) {
+            $pricing = array_values(array_filter($pricing, function ($price) use ($selected_types) {
+                return in_array((int)$price['service_type'], $selected_types, true);
+            }));
+        }
+
+        return self::aggregatePricingBreakdown($pricing);
+    }
+
+    private static function aggregatePricingBreakdown(array $pricing): array
+    {
+        $total_cost_weekly = $total_cost_pm = $inactive_count = 0;
+
+        foreach ($pricing as $price) {
+            if ($price['active'] !== 1) {
+                $inactive_count++;
+                continue;
+            }
+
+            if (Session::get('dashboard_currency') !== 'USD') {
+                $the_price = Pricing::convertFromUSD($price['as_usd'], Session::get('dashboard_currency'));
+            } else {
+                $the_price = $price['as_usd'];
+            }
+
+            $term_months = self::termInMonths((int)$price['term']);
+            $total_cost_weekly += ($the_price / ($term_months * 4));
+            $total_cost_pm += ($the_price / $term_months);
+        }
+
+        return array(
+            'total_cost_weekly' => $total_cost_weekly,
+            'total_cost_monthly' => $total_cost_pm,
+            'total_cost_yearly' => ($total_cost_pm * 12),
+            'inactive_count' => $inactive_count,
+        );
+    }
+
+    private static function termInMonths(int $term): int
+    {
+        if ($term === 2) {
+            return 3;
+        }
+
+        if ($term === 3) {
+            return 6;
+        }
+
+        if ($term === 4) {
+            return 12;
+        }
+
+        if ($term === 5) {
+            return 24;
+        }
+
+        if ($term === 6) {
+            return 36;
+        }
+
+        return 1;
     }
 
     public static function doServicesCount($services_count): array

@@ -29,6 +29,8 @@ require __DIR__ . '/auth.php';
 Route::get('servers/public', [ServerController::class, 'showServersPublic'])->name('servers/public');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/costs/filter', [HomeController::class, 'filterCosts'])->name('costs.filter');
+
     Route::resource('account', AccountController::class);
 
     Route::resource('dns', DNSController::class);
