@@ -1,14 +1,25 @@
 FROM php:8.4-fpm-alpine
 
-# Install dependencies for PHP extensions
-RUN apk add --no-cache linux-headers
+# Install dependencies for PHP extensions and Composer package extraction
+RUN apk add --no-cache \
+    curl \
+    git \
+    libxml2-dev \
+    linux-headers \
+    oniguruma-dev \
+    libzip-dev \
+    unzip
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql sockets bcmath pcntl
-
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- \
-     --install-dir=/usr/local/bin --filename=composer
+# Install PHP extensions required by Laravel and Composer dependencies
+RUN docker-php-ext-install \
+    bcmath \
+    dom \
+    mbstring \
+    pcntl \
+    pdo \
+    pdo_mysql \
+    sockets \
+    zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
