@@ -129,6 +129,10 @@
     overflow: hidden;
 }
 
+.dashboard-card--overflow-visible {
+    overflow: visible;
+}
+
 .card-header-custom {
     display: flex;
     align-items: center;

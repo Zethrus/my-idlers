@@ -57,7 +57,7 @@
         <div class="row g-3 mb-4">
             <!-- Costs Card -->
             <div class="col-12 col-lg-6">
-                <div class="dashboard-card">
+                <div class="dashboard-card dashboard-card--overflow-visible">
                     <div class="card-header-custom">
                         <h5 class="card-title-custom">Costs</h5>
                         @php
