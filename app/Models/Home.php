@@ -44,6 +44,8 @@ class Home extends Model
         return [
             'all' => 'All cycles',
             'monthly' => 'Monthly only',
+            'quarterly' => 'Quarterly only',
+            'semi-annual' => 'Semi-annual only',
             'annual' => 'Annual-based',
         ];
     }
@@ -261,6 +263,14 @@ class Home extends Model
     {
         if ($billing_cycle === 'monthly') {
             return [1];
+        }
+
+        if ($billing_cycle === 'quarterly') {
+            return [2];
+        }
+
+        if ($billing_cycle === 'semi-annual') {
+            return [3];
         }
 
         if ($billing_cycle === 'annual') {
