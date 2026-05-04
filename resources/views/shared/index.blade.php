@@ -38,12 +38,12 @@
                             <td class="text-nowrap">{{ $row->provider->name }}</td>
                             <td class="text-center text-nowrap">{{ $row->disk_as_gb }}<small class="text-muted">GB</small></td>
                             <td class="text-center">{{ $row->domains_limit }}</td>
-                            <td class="text-nowrap">
+                            <td class="text-nowrap" data-order="{{ $row->price->as_usd ?? $row->price->price }}">
                                 {{ $row->price->price }} {{ $row->price->currency }}
                                 <small class="text-muted">{{ \App\Process::paymentTermIntToString($row->price->term) }}</small>
                             </td>
-                            <td class="text-center text-nowrap">{{ Carbon\Carbon::parse($row->price->next_due_date)->diffForHumans() }}</td>
-                            <td class="text-center text-nowrap">{{ $row->owned_since }}</td>
+                            <td class="text-center text-nowrap" data-order="{{ Carbon\Carbon::parse($row->price->next_due_date)->timestamp }}">{{ Carbon\Carbon::parse($row->price->next_due_date)->diffForHumans() }}</td>
+                            <td class="text-center text-nowrap" data-order="{{ $row->owned_since ?? '' }}">{{ $row->owned_since }}</td>
                             <td class="text-center text-nowrap">
                                 <div class="action-buttons">
                                     <a href="{{ route('shared.show', $row->id) }}" class="btn btn-sm btn-action" title="View">
@@ -83,6 +83,7 @@
         window.addEventListener('load', function () {
             $.fn.dataTable.ext.errMode = 'none';
             $('#shared-table').DataTable({
+                order: [],
                 pageLength: 15,
                 lengthMenu: [5, 10, 15, 25, 50, 100],
                 columnDefs: [

@@ -28,12 +28,12 @@
                         @foreach($misc as $m)
                         <tr>
                             <td class="fw-medium">{{ $m->name }}</td>
-                            <td class="text-nowrap">
+                            <td class="text-nowrap" data-order="{{ $m->price->as_usd ?? $m->price->price }}">
                                 {{ $m->price->price }} {{ $m->price->currency }}
                                 <small class="text-muted">{{ \App\Process::paymentTermIntToString($m->price->term) }}</small>
                             </td>
-                            <td class="text-center text-nowrap">{{ now()->diffInDays($m->price->next_due_date) }}d</td>
-                            <td class="text-center text-nowrap">
+                            <td class="text-center text-nowrap" data-order="{{ now()->diffInDays($m->price->next_due_date, false) }}">{{ now()->diffInDays($m->price->next_due_date, false) }}d</td>
+                            <td class="text-center text-nowrap" data-order="{{ $m->owned_since ?? '' }}">
                                 @if(!is_null($m->owned_since))
                                     {{ $m->owned_since }}
                                 @endif
@@ -77,6 +77,7 @@
         window.addEventListener('load', function () {
             $.fn.dataTable.ext.errMode = 'none';
             $('#misc-table').DataTable({
+                order: [],
                 pageLength: 15,
                 lengthMenu: [5, 10, 15, 25, 50, 100],
                 columnDefs: [

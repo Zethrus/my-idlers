@@ -64,22 +64,22 @@
                                         @endif
                                     </td>
                                     <td class="text-center">{{ $server->cpu }}</td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-center text-nowrap" data-order="{{ $server->ram_as_mb ?? $server->ram }}">
                                         {{ $server->ram }}<small class="text-muted">{{ $server->ram_type }}</small>
                                     </td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-center text-nowrap" data-order="{{ $server->disk_as_gb ?? $server->disk }}">
                                         {{ $server->disk }}<small class="text-muted">{{ $server->disk_type }}</small>
                                     </td>
                                     <td class="text-nowrap">{{ $server->location->name }}</td>
                                     <td class="text-nowrap">{{ $server->provider->name }}</td>
-                                    <td class="text-nowrap">
+                                    <td class="text-nowrap" data-order="{{ $server->price->as_usd ?? $server->price->price }}">
                                         {{ $server->price->price }} {{ $server->price->currency }}
                                         <small class="text-muted">{{ \App\Process::paymentTermIntToString($server->price->term) }}</small>
                                     </td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-center text-nowrap" data-order="{{ now()->diffInDays(Carbon\Carbon::parse($server->price->next_due_date), false) }}">
                                         {{ number_format(now()->diffInDays(Carbon\Carbon::parse($server->price->next_due_date), false), 0) }}d
                                     </td>
-                                    <td class="text-center text-nowrap">{{ $server->owned_since }}</td>
+                                    <td class="text-center text-nowrap" data-order="{{ $server->owned_since ?? '' }}">{{ $server->owned_since }}</td>
                                     <td class="text-center text-nowrap">
                                         <div class="action-buttons">
                                             <a href="{{ route('servers.show', $server->id) }}" class="btn btn-sm btn-action" title="View">
@@ -112,7 +112,7 @@
 
                 <div class="tab-pane fade" id="inactive-servers" role="tabpanel">
                     <div class="table-responsive">
-                        <table class="table data-table">
+                        <table class="table data-table" id="inactive-servers-table">
                             <thead>
                                 <tr>
                                     <th>Hostname</th>
@@ -142,14 +142,14 @@
                                         @endif
                                     </td>
                                     <td class="text-center">{{ $server->cpu }}</td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-center text-nowrap" data-order="{{ $server->ram_as_mb ?? $server->ram }}">
                                         @if($server->ram_as_mb > 1024)
                                             {{ number_format($server->ram_as_mb / 1024, 0) }}<small class="text-muted">GB</small>
                                         @else
                                             {{ $server->ram_as_mb }}<small class="text-muted">MB</small>
                                         @endif
                                     </td>
-                                    <td class="text-center text-nowrap">
+                                    <td class="text-center text-nowrap" data-order="{{ $server->disk_as_gb ?? $server->disk }}">
                                         @if($server->disk > 1000)
                                             {{ number_format($server->disk / 1024, 1) }}<small class="text-muted">TB</small>
                                         @else
@@ -158,11 +158,11 @@
                                     </td>
                                     <td class="text-nowrap">{{ $server->location->name }}</td>
                                     <td class="text-nowrap">{{ $server->provider->name }}</td>
-                                    <td class="text-nowrap">
+                                    <td class="text-nowrap" data-order="{{ $server->price->as_usd ?? $server->price->price }}">
                                         {{ $server->price->price }} {{ $server->price->currency }}
                                         <small class="text-muted">{{ \App\Process::paymentTermIntToString($server->price->term) }}</small>
                                     </td>
-                                    <td class="text-center text-nowrap">{{ $server->owned_since }}</td>
+                                    <td class="text-center text-nowrap" data-order="{{ $server->owned_since ?? '' }}">{{ $server->owned_since }}</td>
                                     <td class="text-center text-nowrap">
                                         <div class="action-buttons">
                                             <a href="{{ route('servers.show', $server->id) }}" class="btn btn-sm btn-action" title="View">
@@ -249,6 +249,7 @@
 
             $.fn.dataTable.ext.errMode = 'none';
             $('#servers-table').DataTable({
+                order: [],
                 pageLength: 15,
                 lengthMenu: [5, 10, 15, 25, 50, 100],
                 columnDefs: [
@@ -264,6 +265,26 @@
                         next: "Next"
                     },
                     emptyTable: "No servers found"
+                }
+            });
+
+            $('#inactive-servers-table').DataTable({
+                order: [],
+                pageLength: 15,
+                lengthMenu: [5, 10, 15, 25, 50, 100],
+                columnDefs: [
+                    {orderable: false, targets: [2, 10]}
+                ],
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search servers...",
+                    lengthMenu: "Show _MENU_",
+                    info: "Showing _START_ to _END_ of _TOTAL_",
+                    paginate: {
+                        previous: "Prev",
+                        next: "Next"
+                    },
+                    emptyTable: "No inactive servers found"
                 }
             });
         });

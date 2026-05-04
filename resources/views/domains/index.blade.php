@@ -34,14 +34,14 @@
                                 </a>
                             </td>
                             <td class="text-nowrap">{{ $domain->provider->name }}</td>
-                            <td class="text-nowrap">
+                            <td class="text-nowrap" data-order="{{ $domain->price->as_usd ?? $domain->price->price }}">
                                 {{ $domain->price->price }}
                                 <small class="text-muted">{{ $domain->price->currency }}</small>
                             </td>
-                            <td class="text-center text-nowrap">
+                            <td class="text-center text-nowrap" data-order="{{ now()->diffInDays(Carbon\Carbon::parse($domain->price->next_due_date), false) }}">
                                 {{ number_format(now()->diffInDays(Carbon\Carbon::parse($domain->price->next_due_date), false), 0) }}d
                             </td>
-                            <td class="text-center text-nowrap">{{ $domain->owned_since }}</td>
+                            <td class="text-center text-nowrap" data-order="{{ $domain->owned_since ?? '' }}">{{ $domain->owned_since }}</td>
                             <td class="text-center text-nowrap">
                                 <div class="action-buttons">
                                     <a href="{{ route('domains.show', $domain->id) }}" class="btn btn-sm btn-action" title="View">
@@ -81,6 +81,7 @@
         window.addEventListener('load', function () {
             $.fn.dataTable.ext.errMode = 'none';
             $('#domain-table').DataTable({
+                order: [],
                 pageLength: 15,
                 lengthMenu: [5, 10, 15, 25, 50, 100],
                 columnDefs: [
