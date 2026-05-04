@@ -56,25 +56,6 @@
     </x-modal-delete-script>
 
     @section('scripts')
-    <script>
-        window.addEventListener('load', function () {
-            $.fn.dataTable.ext.errMode = 'none';
-            $('#providers-table').DataTable({
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [1]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: { previous: "Prev", next: "Next" },
-                    emptyTable: "No providers found"
-                }
-            });
-        });
-    </script>
+    <x-datatable-init selector="#providers-table" :non-orderable="[1]" empty-table="No providers found" />
     @endsection
 </x-app-layout>

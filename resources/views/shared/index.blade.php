@@ -79,26 +79,6 @@
     </x-modal-delete-script>
 
     @section('scripts')
-    <script>
-        window.addEventListener('load', function () {
-            $.fn.dataTable.ext.errMode = 'none';
-            $('#shared-table').DataTable({
-                order: [],
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [9]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: { previous: "Prev", next: "Next" },
-                    emptyTable: "No shared hosting found"
-                }
-            });
-        });
-    </script>
+    <x-datatable-init selector="#shared-table" :non-orderable="[9]" empty-table="No shared hosting found" :order="[]" />
     @endsection
 </x-app-layout>

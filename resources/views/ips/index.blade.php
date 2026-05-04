@@ -72,25 +72,6 @@
     </x-modal-delete-script>
 
     @section('scripts')
-    <script>
-        window.addEventListener('load', function () {
-            $.fn.dataTable.ext.errMode = 'none';
-            $('#ips-table').DataTable({
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [7]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: { previous: "Prev", next: "Next" },
-                    emptyTable: "No IP addresses found"
-                }
-            });
-        });
-    </script>
+    <x-datatable-init selector="#ips-table" :non-orderable="[7]" empty-table="No IP addresses found" />
     @endsection
 </x-app-layout>

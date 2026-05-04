@@ -77,26 +77,6 @@
     </x-modal-delete-script>
 
     @section('scripts')
-    <script>
-        window.addEventListener('load', function () {
-            $.fn.dataTable.ext.errMode = 'none';
-            $('#domain-table').DataTable({
-                order: [],
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [5]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: { previous: "Prev", next: "Next" },
-                    emptyTable: "No domains found"
-                }
-            });
-        });
-    </script>
+    <x-datatable-init selector="#domain-table" :non-orderable="[5]" empty-table="No domains found" :order="[]" />
     @endsection
 </x-app-layout>

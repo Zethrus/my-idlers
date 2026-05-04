@@ -99,26 +99,6 @@
     </x-modal-delete-script>
 
     @section('scripts')
-    <script>
-        window.addEventListener('load', function () {
-            $.fn.dataTable.ext.errMode = 'none';
-            $('#seedbox-table').DataTable({
-                order: [],
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [10]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: { previous: "Prev", next: "Next" },
-                    emptyTable: "No seedboxes found"
-                }
-            });
-        });
-    </script>
+    <x-datatable-init selector="#seedbox-table" :non-orderable="[10]" empty-table="No seedboxes found" :order="[]" />
     @endsection
 </x-app-layout>

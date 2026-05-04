@@ -247,47 +247,9 @@
                 }
             });
 
-            $.fn.dataTable.ext.errMode = 'none';
-            $('#servers-table').DataTable({
-                order: [],
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [2, 11]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search servers...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: {
-                        previous: "Prev",
-                        next: "Next"
-                    },
-                    emptyTable: "No servers found"
-                }
-            });
-
-            $('#inactive-servers-table').DataTable({
-                order: [],
-                pageLength: 15,
-                lengthMenu: [5, 10, 15, 25, 50, 100],
-                columnDefs: [
-                    {orderable: false, targets: [2, 10]}
-                ],
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search servers...",
-                    lengthMenu: "Show _MENU_",
-                    info: "Showing _START_ to _END_ of _TOTAL_",
-                    paginate: {
-                        previous: "Prev",
-                        next: "Next"
-                    },
-                    emptyTable: "No inactive servers found"
-                }
-            });
         });
     </script>
+    <x-datatable-init selector="#servers-table" :non-orderable="[2, 11]" search-placeholder="Search servers..." empty-table="No servers found" :order="[]" />
+    <x-datatable-init selector="#inactive-servers-table" :non-orderable="[2, 10]" search-placeholder="Search servers..." empty-table="No inactive servers found" :order="[]" />
     @endsection
 </x-app-layout>
